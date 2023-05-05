@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/algorithms and data structures I/Percolation/Percolation.iml" filepath="$PROJECT_DIR$/algorithms and data structures I/Percolation/Percolation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/algorithms and data structures I/algorithms and data structures I.iml" filepath="$PROJECT_DIR$/algorithms and data structures I/algorithms and data structures I.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/coursera.iml" filepath="$PROJECT_DIR$/.idea/coursera.iml" />
+    </modules>
+  </component>
+</project>

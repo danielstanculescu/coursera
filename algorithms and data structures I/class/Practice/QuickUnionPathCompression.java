@@ -12,7 +12,7 @@ public class QuickUnionPathCompression {
         sz = new int[n];
         for (int i = 0; i < n; i++) {
             id[i] = i;
-            sz[i] = i;
+            sz[i] = 1;
         }
     }
 
@@ -25,11 +25,10 @@ public class QuickUnionPathCompression {
         int rootq = find(q);
         if (rootp == rootq)
             return;
-        if(sz[rootp] < sz[rootq]) {
+        if (sz[rootp] < sz[rootq]) {
             id[rootp] = rootq;
             sz[rootq] += sz[rootp];
-        }
-        else {
+        } else {
             id[rootq] = rootp;
             sz[rootp] += sz[rootq];
         }
@@ -58,4 +57,3 @@ public class QuickUnionPathCompression {
         System.out.println(uf.count());
     }
 }
-

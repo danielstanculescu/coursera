@@ -34,7 +34,6 @@ public class Deque<Item> implements Iterable<Item> {
             throw new IllegalArgumentException();
         }
 
-        N++;
         Node newFirst = new Node();
         newFirst.item = item;
         newFirst.next = first;
@@ -44,6 +43,7 @@ public class Deque<Item> implements Iterable<Item> {
             last = first;
         else
             newFirst.next.prev = newFirst;
+        N++;
     }
 
     // add the item to the back
@@ -51,7 +51,7 @@ public class Deque<Item> implements Iterable<Item> {
         if (item == null) {
             throw new IllegalArgumentException();
         }
-        N++;
+
         Node oldLast = last;
         last = new Node();
         last.item = item;
@@ -61,6 +61,7 @@ public class Deque<Item> implements Iterable<Item> {
         else
             oldLast.next = last;
         last.prev = oldLast;
+        N++;
     }
 
     // remove and return the item from the front
@@ -122,6 +123,7 @@ public class Deque<Item> implements Iterable<Item> {
     // unit testing (required)
     public static void main(String[] args) {
         Deque<Integer> d = new Deque<>();
+
         d.addLast(1);
         d.addLast(2);
         d.addFirst(3);
@@ -131,6 +133,8 @@ public class Deque<Item> implements Iterable<Item> {
         d.removeLast();
         d.removeFirst();
 
+        StdOut.println(d.size());
+        StdOut.println(d.isEmpty());
 
         Iterator<Integer> it = d.iterator();
         while (it.hasNext()) {

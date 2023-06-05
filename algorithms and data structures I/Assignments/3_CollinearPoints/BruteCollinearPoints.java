@@ -51,7 +51,7 @@ public class BruteCollinearPoints {
                                                     }
                                                 }
                                                 if (!isFound) {
-                                                    resize(numberOfSegments+1);
+                                                    resize(numberOfSegments+1);  // use maybe stack push pop?
                                                     possibleSegments[numberOfSegments][0] = tampon[0];
                                                     possibleSegments[numberOfSegments][1] = tampon[1];
                                                     possibleSegments[numberOfSegments][2] = tampon[2];

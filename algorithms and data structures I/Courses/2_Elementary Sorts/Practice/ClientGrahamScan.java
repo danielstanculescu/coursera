@@ -9,6 +9,6 @@ public class ClientGrahamScan {
         points[5] = new Point2D(10,10);
         GrahamScan gs = new GrahamScan(points);
         gs.computeHull();
-        gs.displayHull();
+        gs.displayAndDistroyHull();
     }
 }

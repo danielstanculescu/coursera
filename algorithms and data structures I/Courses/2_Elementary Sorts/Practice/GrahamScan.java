@@ -34,7 +34,7 @@ public class GrahamScan {
             hull.push(p[i]);
         }
     }
-    public void displayHull(){
+    public void displayAndDistroyHull(){
         while(!hull.empty()){
             Point2D point = hull.pop();
             StdOut.println(point.x + " " + point.y);

@@ -1,6 +1,4 @@
 import java.util.Comparator;
-
-import edu.princeton.cs.algs4.Insertion;
 import edu.princeton.cs.algs4.StdDraw;
 
 public class Point implements Comparable<Point> {
@@ -51,13 +49,12 @@ public class Point implements Comparable<Point> {
      * @return the slope between this point and the specified point
      */
     public double slopeTo(Point that) {
-        /* YOUR CODE HERE */
-        if(that.x == this.x)
-            return Double.POSITIVE_INFINITY;
-        if(that.y == this.y)
-            return +0.0;
         if(this.compareTo(that) == 0)
             return Double.NEGATIVE_INFINITY;
+        if(that.y == this.y)
+            return +0.0;
+        if(that.x == this.x)
+            return Double.POSITIVE_INFINITY;
 
         return (double)(that.y - this.y) / (that.x - this.x);
     }
@@ -79,9 +76,8 @@ public class Point implements Comparable<Point> {
             return 0;
         else if ((this.y < that.y) || (this.y == that.y && this.x < that.x))
             return -1;
-        //else if ((this.y > that.y) || (this.y == that.y && this.x > that.x))
-            return 1;
 
+        return 1;
     }
 
     /**
@@ -90,12 +86,25 @@ public class Point implements Comparable<Point> {
      *
      * @return the Comparator that defines this ordering on points
      */
-    //public Comparator<Point> slopeOrder() {
-        /* YOUR CODE HERE */
+    public Comparator<Point> slopeOrder() {
 
-    //}
+        Comparator<Point> BySlopeOrder = new BySlopeOrder();
 
+        return BySlopeOrder;
+    }
 
+    private class BySlopeOrder implements Comparator<Point>{
+        public int compare(Point q1, Point q2){
+            double slopeToQ1 = slopeTo(q1);
+            double slopeToQ2 = slopeTo(q2);
+
+            if(slopeToQ1 == slopeToQ2)
+                return 0;
+            else if(slopeToQ1 < slopeToQ2)
+                return -1;
+            return 1;
+        }
+    }
 
     /**
      * Returns a string representation of this point.

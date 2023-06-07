@@ -28,11 +28,13 @@ public class SampleClient {
         //FastCollinearPoints collinear = new FastCollinearPoints(points);
         BruteCollinearPoints collinear = new BruteCollinearPoints(points);
 
-        for (LineSegment segment : collinear.segments()) {
+       for (LineSegment segment : collinear.segments()) {
             StdOut.println(segment);
             segment.draw();
         }
 
         StdDraw.show();
+
+
     }
 }

@@ -1,64 +1,62 @@
-import edu.princeton.cs.algs4.Insertion;
-import edu.princeton.cs.algs4.Merge;
-
-import java.util.Arrays;
+import java.util.Stack;
 
 public class BruteCollinearPoints {
-    private LineSegment[] lineSegments;
+    private final LineSegment[] lineSegments;
     private int numberOfSegments = 0;
 
-    private int[][] possibleSegments = new int[1][4];
-    private final int[] tampon = new int[4];
+    // finds all line segments containing 4 points
+    public BruteCollinearPoints(Point[] points) {
+        if (points == null)
+            throw new IllegalArgumentException("argument to FastCollinearPoints constructor is null");
 
-    public BruteCollinearPoints(Point[] points)    // finds all line segments containing 4 points
-    {
         double slope1, slope2, slope3;
-        //int compare1, compare2, compare3;
+
+        Stack<Point> segmentsStack = new Stack<Point>();
+        Stack<Double> slopesStack = new Stack<Double>();
+        Stack<Point> allPointsStack = new Stack<Point>();
+
+        for (int x = 0; x < points.length; x++) {
+            if (points[x] == null)
+                throw new IllegalArgumentException("point in the array is null");
+
+            Point p = points[x];
+
+            for (int i = 0; i < allPointsStack.size(); i++) {
+                if (allPointsStack.elementAt(i).compareTo(p) == 0)
+                    throw new IllegalArgumentException("the argument to the constructor contains a repeated point");
+            }
+            allPointsStack.push(p);
+        }
+
         for (int i = 0; i < points.length; i++) {
+            second:
             for (int j = 0; j < points.length; j++) {
                 if (j != i) {
                     slope1 = points[i].slopeTo(points[j]);
-
+                    if (slopesStack.contains(slope1))
+                        break;
+                    if (points[i].compareTo(points[j]) >= 0)
+                        continue;
                     for (int k = 0; k < points.length; k++) {
                         if (k != i && k != j) {
+                            if (points[j].compareTo(points[k]) >= 0)
+                                continue;
                             slope2 = points[j].slopeTo(points[k]);
 
                             if (slope1 == slope2) {
                                 for (int l = 0; l < points.length; l++) {
                                     if (l != i && l != j && l != k) {
+                                        if (points[k].compareTo(points[l]) >= 0)
+                                            continue;
                                         slope3 = points[k].slopeTo(points[l]);
 
                                         if (slope1 == slope3) {
 
-                                            tampon[0] = i;
-                                            tampon[1] = j;
-                                            tampon[2] = k;
-                                            tampon[3] = l;
-                                            Arrays.sort(tampon);
-
-                                            if (numberOfSegments == 0) {
-                                                possibleSegments[0][0] = tampon[0];
-                                                possibleSegments[0][1] = tampon[1];
-                                                possibleSegments[0][2] = tampon[2];
-                                                possibleSegments[0][3] = tampon[3];
-                                                numberOfSegments++;
-                                            } else {
-                                                boolean isFound = false;
-                                                for (int m = 0; m < possibleSegments.length; m++) {
-                                                    if (possibleSegments[m][0] == tampon[0] && possibleSegments[m][1] == tampon[1] && possibleSegments[m][2] == tampon[2] && possibleSegments[m][3] == tampon[3]) {
-                                                        isFound = true;
-                                                        break;
-                                                    }
-                                                }
-                                                if (!isFound) {
-                                                    resize(numberOfSegments+1);  // use maybe stack push pop?
-                                                    possibleSegments[numberOfSegments][0] = tampon[0];
-                                                    possibleSegments[numberOfSegments][1] = tampon[1];
-                                                    possibleSegments[numberOfSegments][2] = tampon[2];
-                                                    possibleSegments[numberOfSegments][3] = tampon[3];
-                                                    numberOfSegments++;
-                                                }
-                                            }
+                                            numberOfSegments++;
+                                            slopesStack.push(slope3);
+                                            segmentsStack.push(points[i]);
+                                            segmentsStack.push(points[l]);
+                                            break second;
                                         }
                                     }
                                 }
@@ -66,34 +64,29 @@ public class BruteCollinearPoints {
                         }
                     }
                 }
-
             }
-
         }
-        lineSegments = new LineSegment[numberOfSegments];
-        for (int i = 0; i < numberOfSegments; i++) {
-            LineSegment ls = new LineSegment(points[possibleSegments[i][0]], points[possibleSegments[i][3]]);
+
+        lineSegments = new LineSegment[segmentsStack.size() / 2];
+        int i = 0;
+        while (!segmentsStack.isEmpty()) {
+
+            Point q1 = segmentsStack.pop();
+            Point q2 = segmentsStack.pop();
+            LineSegment ls = new LineSegment(q1, q2);
+
             lineSegments[i] = ls;
+            i++;
         }
     }
-    private void resize(int capacity) {
 
-        int[][] copy = new int[capacity][4];
-        for (int i = 0; i < possibleSegments.length; i++) {
-            System.arraycopy(possibleSegments[i], 0, copy[i], 0, 4);
-        }
-        possibleSegments = copy;
-    }
-
-    public int numberOfSegments()        // the number of line segments
-    {
+    // the number of line segments
+    public int numberOfSegments() {
         return numberOfSegments;
     }
 
-    public LineSegment[] segments()                // the line segments
-    {
+    // the line segments
+    public LineSegment[] segments() {
         return this.lineSegments;
     }
-
-
 }

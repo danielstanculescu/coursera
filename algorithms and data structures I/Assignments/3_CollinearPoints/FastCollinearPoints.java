@@ -1,6 +1,7 @@
 import java.util.Arrays;
 import java.util.Stack;
 
+
 public class FastCollinearPoints {
 
     private final int numberOfSegments = 0;
@@ -26,6 +27,8 @@ public class FastCollinearPoints {
                 throw new IllegalArgumentException("point in the array is null");
 
             Point p = points[x];
+            slopesStack.clear();
+
 
             for (int i = 0; i < allPointsStack.size(); i++) {
                 if (allPointsStack.elementAt(i).compareTo(p) == 0)
@@ -127,16 +130,34 @@ public class FastCollinearPoints {
             }
         }
 
-        lineSegments = new LineSegment[segmentsStack.size() / 2];
+
+        LineSegment[] auxLineSegments = new LineSegment[segmentsStack.size() / 2];
         int i = 0;
         while (!segmentsStack.isEmpty()) {
 
-            Point q1 = segmentsStack.pop();
             Point q2 = segmentsStack.pop();
+            Point q1 = segmentsStack.pop();
+
             LineSegment ls = new LineSegment(q1, q2);
 
-            lineSegments[i] = ls;
+            auxLineSegments[i] = ls;
             i++;
+            int j = 0;
+            while (j < segmentsStack.size()) {
+                if(segmentsStack.elementAt(j).equals(q1)) {
+                    if (j + 1 <= segmentsStack.size() - 1 && segmentsStack.elementAt(j + 1).equals(q2)) {
+                        segmentsStack.removeElementAt(j);
+                        segmentsStack.removeElementAt(j);
+                        j = j-2;
+                    }
+                }
+                j = j + 2;
+            }
+        }
+
+        lineSegments = new LineSegment[i];
+        for (int j = 0; j < i; j++) {
+            lineSegments[j] = auxLineSegments[j];
         }
     }
 

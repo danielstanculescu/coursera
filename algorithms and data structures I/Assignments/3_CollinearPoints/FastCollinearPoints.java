@@ -144,11 +144,11 @@ public class FastCollinearPoints {
             i++;
             int j = 0;
             while (j < segmentsStack.size()) {
-                if(segmentsStack.elementAt(j).equals(q1)) {
+                if (segmentsStack.elementAt(j).equals(q1)) {
                     if (j + 1 <= segmentsStack.size() - 1 && segmentsStack.elementAt(j + 1).equals(q2)) {
                         segmentsStack.removeElementAt(j);
                         segmentsStack.removeElementAt(j);
-                        j = j-2;
+                        j = j - 2;
                     }
                 }
                 j = j + 2;
@@ -156,9 +156,7 @@ public class FastCollinearPoints {
         }
 
         lineSegments = new LineSegment[i];
-        for (int j = 0; j < i; j++) {
-            lineSegments[j] = auxLineSegments[j];
-        }
+        System.arraycopy(auxLineSegments, 0, lineSegments, 0, i);
     }
 
     // the number of line segments

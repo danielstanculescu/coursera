@@ -29,14 +29,12 @@ public class BruteCollinearPoints {
         }
 
         for (int i = 0; i < points.length; i++) {
-            second:
             for (int j = 0; j < points.length; j++) {
                 if (j != i) {
                     slope1 = points[i].slopeTo(points[j]);
-                    if (slopesStack.contains(slope1))
-                        break;
                     if (points[i].compareTo(points[j]) >= 0)
                         continue;
+                    third:
                     for (int k = 0; k < points.length; k++) {
                         if (k != i && k != j) {
                             if (points[j].compareTo(points[k]) >= 0)
@@ -56,7 +54,7 @@ public class BruteCollinearPoints {
                                             slopesStack.push(slope3);
                                             segmentsStack.push(points[i]);
                                             segmentsStack.push(points[l]);
-                                            break second;
+                                            break third;
                                         }
                                     }
                                 }

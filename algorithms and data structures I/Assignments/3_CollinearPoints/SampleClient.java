@@ -32,7 +32,7 @@ public class SampleClient {
             StdOut.println(segment);
             segment.draw();
         }
-
+        StdOut.println(collinear.numberOfSegments());
         StdDraw.show();
     }
 }

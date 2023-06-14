@@ -1,5 +1,4 @@
 import java.util.Comparator;
-
 import edu.princeton.cs.algs4.StdDraw;
 
 public class Point implements Comparable<Point> {
@@ -89,9 +88,9 @@ public class Point implements Comparable<Point> {
      */
     public Comparator<Point> slopeOrder() {
 
-        Comparator<Point> BySlopeOrder = new BySlopeOrder();
+        Comparator<Point> bySlopeOrder = new BySlopeOrder();
 
-        return BySlopeOrder;
+        return bySlopeOrder;
     }
 
     private class BySlopeOrder implements Comparator<Point> {

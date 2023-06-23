@@ -1,11 +1,66 @@
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
 
+import java.util.Comparator;
+
 public class Solver {
+
+    private Queue<Board> queueOfBoardsSolution = new Queue<Board>();
+    private class SearchNode{
+        public final Comparator<SearchNode> BY_MANHATTAN_DISTANCE = new ByManhattanDistance();
+        public Board thisBoard;
+        public int numberOfMovesMadeToReachTheBoard;
+        public Board previousBoard;
+
+        public SearchNode(Board thisBoard, int numberOfMovesMadeToReachTheBoard, Board previousBoard){
+            this.thisBoard = thisBoard;
+            this.numberOfMovesMadeToReachTheBoard = numberOfMovesMadeToReachTheBoard;
+            this.previousBoard = previousBoard;
+        }
+
+        private class ByManhattanDistance implements Comparator<SearchNode>{
+            @Override
+            public int compare(SearchNode o1, SearchNode o2) {
+                int manhattan1 = o1.thisBoard.manhattan();
+                int manhattan2 = o2.thisBoard.manhattan();
+
+                if( manhattan1 == manhattan2)
+                    return 0;
+                else if(manhattan1 < manhattan2)
+                    return -1;
+                return 1;
+            }
+        }
+    }
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial){
 
+        int numberOfMovesToReachTheBoard = 0;
+
+        SearchNode sn = new SearchNode(initial,numberOfMovesToReachTheBoard, null);
+
+        MinPQ<SearchNode> minPQ = new MinPQ(sn.BY_MANHATTAN_DISTANCE);
+        minPQ.insert(sn);
+
+        SearchNode snSolution = minPQ.delMin();
+        queueOfBoardsSolution.enqueue(snSolution.thisBoard);
+        numberOfMovesToReachTheBoard ++;
+
+        while(!snSolution.thisBoard.isGoal()) {
+            for (Board neighbor : snSolution.thisBoard.neighbors()) {
+                if (snSolution.previousBoard != null && snSolution.previousBoard.equals(neighbor))
+                    continue;
+                sn = new SearchNode(neighbor, numberOfMovesToReachTheBoard, initial);
+                minPQ.insert(sn);
+            }
+
+            snSolution = minPQ.delMin();
+            queueOfBoardsSolution.enqueue(snSolution.thisBoard);
+            numberOfMovesToReachTheBoard++;
+        }
     }
 /*
     // is the initial board solvable? (see below)
@@ -48,10 +103,10 @@ public class Solver {
         StdOut.println(b2);
 
 
-/*
+
         // solve the puzzle
         Solver solver = new Solver(initial);
-
+/*
         // print solution to standard output
         if (!solver.isSolvable())
             StdOut.println("No solution possible");

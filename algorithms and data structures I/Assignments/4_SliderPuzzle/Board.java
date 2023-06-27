@@ -5,59 +5,56 @@ import java.util.Iterator;
 
 public class Board {
 
-    private int n;
-    private int[][] tiles;
+    private static Board twinBoard;
+
+    private final int n;
+    private final int[][] tiles;
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
-    public Board(int[][] tiles){
+    public Board(int[][] tiles) {
         this.n = tiles.length;
         this.tiles = new int[n][n];
         for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                this.tiles[i][j] = tiles[i][j];
+            System.arraycopy(tiles[i], 0, this.tiles[i], 0, n);
     }
 
     // string representation of this board
-    public String toString(){
-
-        String result = n + "\n";
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append(n + "\n");
         for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++){
-                if(j != n-1)
-                    result += tiles[i][j] + "\t";
-                else
-                    result += tiles[i][j];
+            for (int j = 0; j < n; j++) {
+                s.append(String.format("%2d ", tiles[i][j]));
             }
-            if(i != n-1)
-                result += "\n";
+            s.append("\n");
         }
-        return result;
+        return s.toString();
     }
 
     // board dimension n
-    public int dimension(){
+    public int dimension() {
         return n;
     }
 
     // number of tiles out of place
-    public int hamming(){
+    public int hamming() {
         int result = 0;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if(tiles[i][j] != 0)
+                if (tiles[i][j] != 0)
                     result += isTileGoal(tiles[i][j], i, j);
             }
         }
-        return n*n-1-result;
+        return n * n - 1 - result;
     }
 
     // sum of Manhattan distances between tiles and goal
-    public int manhattan(){
+    public int manhattan() {
         int result = 0;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if(tiles[i][j] != 0)
+                if (tiles[i][j] != 0)
                     result += distanceToGoal(tiles[i][j], i, j);
             }
         }
@@ -65,12 +62,12 @@ public class Board {
     }
 
     // is this board the goal board?
-    public boolean isGoal(){
-        return hamming()==0?true:false;
+    public boolean isGoal() {
+        return hamming() == 0;
     }
 
     // does this board equal y?
-    public boolean equals(Object y){
+    public boolean equals(Object y) {
 
         if (y == this) {
             return true;
@@ -79,12 +76,12 @@ public class Board {
             return false;
         }
 
-        Board b = (Board)y;
-        if(n != b.n)
+        Board b = (Board) y;
+        if (n != b.n)
             return false;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if(tiles[i][j] != b.tiles[i][j])
+                if (tiles[i][j] != b.tiles[i][j])
                     return false;
             }
         }
@@ -92,12 +89,12 @@ public class Board {
     }
 
     // all neighboring boards
-    public Iterable<Board> neighbors(){
+    public Iterable<Board> neighbors() {
         Iterable<Board> it = new IterableBoard();
         return it;
     }
 
-    private class IterableBoard implements Iterable<Board>{
+    private class IterableBoard implements Iterable<Board> {
 
         @Override
         public Iterator<Board> iterator() {
@@ -106,18 +103,19 @@ public class Board {
         }
     }
 
-    private class BoardIterator implements Iterator<Board>{
+    private class BoardIterator implements Iterator<Board> {
 
         private int position = 0;
-        private Board[] neighbors;
+        private final Board[] neighbors;
 
-        public BoardIterator(){
-            int i=0, j=0;
+        public BoardIterator() {
+            int i = 0, j = 0;
 
             // find x position and y position of the tile 0
-            outer: for (i = 0; i < n; i++) {
+            outer:
+            for (i = 0; i < n; i++) {
                 for (j = 0; j < n; j++) {
-                    if(tiles[i][j] == 0)
+                    if (tiles[i][j] == 0)
                         break outer;
                 }
             }
@@ -125,34 +123,30 @@ public class Board {
             int numberOfNeighbors = 4;
             int indexNeighbour = 0;
             // depending of the position of 0 => number of neighbors
-            if(i == 0 || i == n - 1)
-                numberOfNeighbors --;
-            if(j == 0 || j == n - 1)
-                numberOfNeighbors --;
+            if (i == 0 || i == n - 1)
+                numberOfNeighbors--;
+            if (j == 0 || j == n - 1)
+                numberOfNeighbors--;
 
             neighbors = new Board[numberOfNeighbors];
 
             // tile 0 with right
-            if(i < n-1){
+            if (i < n - 1) {
                 int[][] tilesClone = new int[n][n];
                 for (int k = 0; k < n; k++) {
-                    for (int l = 0; l < n; l++) {
-                        tilesClone[k][l] = tiles[k][l];
-                    }
+                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
                 }
 
-                exch(tilesClone, i, j, i+1, j);
+                exch(tilesClone, i, j, i + 1, j);
                 Board neighbour = new Board(tilesClone);
                 neighbors[indexNeighbour++] = neighbour;
             }
 
             // tile 0 with left
-            if(i>0) {
+            if (i > 0) {
                 int[][] tilesClone = new int[n][n];
                 for (int k = 0; k < n; k++) {
-                    for (int l = 0; l < n; l++) {
-                        tilesClone[k][l] = tiles[k][l];
-                    }
+                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
                 }
                 exch(tilesClone, i, j, i - 1, j);
                 Board neighbour = new Board(tilesClone);
@@ -160,12 +154,10 @@ public class Board {
             }
 
             // tile 0 with up
-            if(j > 0) {
+            if (j > 0) {
                 int[][] tilesClone = new int[n][n];
                 for (int k = 0; k < n; k++) {
-                    for (int l = 0; l < n; l++) {
-                        tilesClone[k][l] = tiles[k][l];
-                    }
+                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
                 }
                 exch(tilesClone, i, j, i, j - 1);
                 Board neighbour = new Board(tilesClone);
@@ -173,14 +165,12 @@ public class Board {
             }
 
             // tile 0 with down
-            if(j < n-1){
+            if (j < n - 1) {
                 int[][] tilesClone = new int[n][n];
                 for (int k = 0; k < n; k++) {
-                    for (int l = 0; l < n; l++) {
-                        tilesClone[k][l] = tiles[k][l];
-                    }
+                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
                 }
-                exch(tilesClone, i, j, i, j+1);
+                exch(tilesClone, i, j, i, j + 1);
                 Board neighbour = new Board(tilesClone);
                 neighbors[indexNeighbour++] = neighbour;
             }
@@ -199,17 +189,18 @@ public class Board {
     }
 
     // a board that is obtained by exchanging any pair of tiles
-    public Board twin(){
-
+    public Board twin() {
+        if (twinBoard != null)
+            return twinBoard;
         int i, j, x, y;
-        while(true) {
+        while (true) {
             i = StdRandom.uniformInt(n);
             j = StdRandom.uniformInt(n);
-            if(tiles[i][j]!=0)
+            if (tiles[i][j] != 0)
                 break;
         }
 
-        while(true) {
+        while (true) {
             x = StdRandom.uniformInt(n);
             y = StdRandom.uniformInt(n);
             if (tiles[x][y] != 0 && (x != i || y != j))
@@ -218,33 +209,31 @@ public class Board {
 
         int[][] tilesClone = new int[n][n];
         for (int k = 0; k < n; k++) {
-            for (int l = 0; l < n; l++) {
-                tilesClone[k][l] = tiles[k][l];
-            }
+            System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
         }
-        exch(tilesClone,i,j,x,y);
-        Board twinBoard = new Board(tilesClone);
+        exch(tilesClone, i, j, x, y);
+        twinBoard = new Board(tilesClone);
         return twinBoard;
     }
 
-    private int goalX(int tile){
-        if(tile == 0)
+    private int goalX(int tile) {
+        if (tile == 0)
             throw new NumberFormatException();
-        return (tile-1) / n;
+        return (tile - 1) / n;
     }
 
-    private int goalY(int tile){
-        if(tile == 0)
+    private int goalY(int tile) {
+        if (tile == 0)
             throw new NumberFormatException();
-        return (tile-1) % n;
+        return (tile - 1) % n;
     }
 
-    private int distanceToGoal(int tile, int x, int y){
-        return Math.abs(x-goalX(tile)) + Math.abs(y-goalY(tile));
+    private int distanceToGoal(int tile, int x, int y) {
+        return Math.abs(x - goalX(tile)) + Math.abs(y - goalY(tile));
     }
 
-    private int isTileGoal(int tile, int x, int y){
-        if(x == goalX(tile) && y == goalY(tile))
+    private int isTileGoal(int tile, int x, int y) {
+        if (x == goalX(tile) && y == goalY(tile))
             return 1;
         return 0;
     }
@@ -256,7 +245,7 @@ public class Board {
     }
 
     // unit testing (not graded)
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
     }
 }

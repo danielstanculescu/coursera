@@ -1,11 +1,9 @@
-import edu.princeton.cs.algs4.Insertion;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdRandom;
-
-import java.util.Iterator;
 
 public class Board {
 
-    private static Board twinBoard;
+    private Board twinBoard;
 
     private final int n;
     private final int[][] tiles;
@@ -69,10 +67,14 @@ public class Board {
     // does this board equal y?
     public boolean equals(Object y) {
 
+        if (y == null)
+            return false;
+
         if (y == this) {
             return true;
         }
-        if (!(y instanceof Board)) {
+
+        if (!(y.getClass() == this.getClass())) {
             return false;
         }
 
@@ -90,102 +92,64 @@ public class Board {
 
     // all neighboring boards
     public Iterable<Board> neighbors() {
-        Iterable<Board> it = new IterableBoard();
-        return it;
-    }
+        Queue<Board> neighbors = new Queue<Board>();
 
-    private class IterableBoard implements Iterable<Board> {
+        int i = 0, j = 0;
 
-        @Override
-        public Iterator<Board> iterator() {
-            Iterator<Board> bi = new BoardIterator();
-            return bi;
-        }
-    }
-
-    private class BoardIterator implements Iterator<Board> {
-
-        private int position = 0;
-        private final Board[] neighbors;
-
-        public BoardIterator() {
-            int i = 0, j = 0;
-
-            // find x position and y position of the tile 0
-            outer:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < n; j++) {
-                    if (tiles[i][j] == 0)
-                        break outer;
-                }
-            }
-
-            int numberOfNeighbors = 4;
-            int indexNeighbour = 0;
-            // depending of the position of 0 => number of neighbors
-            if (i == 0 || i == n - 1)
-                numberOfNeighbors--;
-            if (j == 0 || j == n - 1)
-                numberOfNeighbors--;
-
-            neighbors = new Board[numberOfNeighbors];
-
-            // tile 0 with right
-            if (i < n - 1) {
-                int[][] tilesClone = new int[n][n];
-                for (int k = 0; k < n; k++) {
-                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
-                }
-
-                exch(tilesClone, i, j, i + 1, j);
-                Board neighbour = new Board(tilesClone);
-                neighbors[indexNeighbour++] = neighbour;
-            }
-
-            // tile 0 with left
-            if (i > 0) {
-                int[][] tilesClone = new int[n][n];
-                for (int k = 0; k < n; k++) {
-                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
-                }
-                exch(tilesClone, i, j, i - 1, j);
-                Board neighbour = new Board(tilesClone);
-                neighbors[indexNeighbour++] = neighbour;
-            }
-
-            // tile 0 with up
-            if (j > 0) {
-                int[][] tilesClone = new int[n][n];
-                for (int k = 0; k < n; k++) {
-                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
-                }
-                exch(tilesClone, i, j, i, j - 1);
-                Board neighbour = new Board(tilesClone);
-                neighbors[indexNeighbour++] = neighbour;
-            }
-
-            // tile 0 with down
-            if (j < n - 1) {
-                int[][] tilesClone = new int[n][n];
-                for (int k = 0; k < n; k++) {
-                    System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
-                }
-                exch(tilesClone, i, j, i, j + 1);
-                Board neighbour = new Board(tilesClone);
-                neighbors[indexNeighbour++] = neighbour;
+        // find x position and y position of the tile 0
+        outer:
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                if (tiles[i][j] == 0)
+                    break outer;
             }
         }
 
-        @Override
-        public boolean hasNext() {
+        // tile 0 with right
+        if (i < n - 1) {
+            int[][] tilesClone = new int[n][n];
+            for (int k = 0; k < n; k++) {
+                System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
+            }
 
-            return position < neighbors.length;
+            exch(tilesClone, i, j, i + 1, j);
+            Board neighbour = new Board(tilesClone);
+            neighbors.enqueue(neighbour);
         }
 
-        @Override
-        public Board next() {
-            return neighbors[position++];
+        // tile 0 with left
+        if (i > 0) {
+            int[][] tilesClone = new int[n][n];
+            for (int k = 0; k < n; k++) {
+                System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
+            }
+            exch(tilesClone, i, j, i - 1, j);
+            Board neighbour = new Board(tilesClone);
+            neighbors.enqueue(neighbour);
         }
+
+        // tile 0 with up
+        if (j > 0) {
+            int[][] tilesClone = new int[n][n];
+            for (int k = 0; k < n; k++) {
+                System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
+            }
+            exch(tilesClone, i, j, i, j - 1);
+            Board neighbour = new Board(tilesClone);
+            neighbors.enqueue(neighbour);
+        }
+
+        // tile 0 with down
+        if (j < n - 1) {
+            int[][] tilesClone = new int[n][n];
+            for (int k = 0; k < n; k++) {
+                System.arraycopy(tiles[k], 0, tilesClone[k], 0, n);
+            }
+            exch(tilesClone, i, j, i, j + 1);
+            Board neighbour = new Board(tilesClone);
+            neighbors.enqueue(neighbour);
+        }
+        return neighbors;
     }
 
     // a board that is obtained by exchanging any pair of tiles

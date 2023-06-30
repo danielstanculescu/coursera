@@ -1,38 +1,39 @@
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
 import edu.princeton.cs.algs4.Queue;
-import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.Stack;
 
 import java.util.Comparator;
-import java.util.Iterator;
 
 public class Solver {
 
-    private final Queue<Board> queueOfBoardsSolution = new Queue<Board>();
-    private final Queue<Board> queueOfBoardsSolutionTwin = new Queue<Board>();
-
+    private final Queue<Board> solution = new Queue<Board>();
     private boolean solvable;
-    private int numberOfMovesToReachTheBoard = 0;
 
     private class SearchNode {
-        public final Comparator<SearchNode> BY_MANHATTAN_DISTANCE = new ByPriorityWithManhattanDistance();
-        public Board currentBoard;
-        public int numberOfMovesMadeToReachTheBoard;
-        public Board previousBoard;
-        public int manhattanDistance;
+        private final Board board;
+        private final int numberOfMovesMadeToReachTheBoard;
+        private final SearchNode previousSearchNode;
+        private final int priority;
 
-        public SearchNode(Board currentBoard, int numberOfMovesMadeToReachTheBoard, Board previousBoard) {
-            this.currentBoard = currentBoard;
+        public SearchNode(Board board, int numberOfMovesMadeToReachTheBoard, SearchNode previousSearchNode) {
+            this.board = board;
             this.numberOfMovesMadeToReachTheBoard = numberOfMovesMadeToReachTheBoard;
-            this.previousBoard = previousBoard;
-            this.manhattanDistance = currentBoard.manhattan();
+            this.previousSearchNode = previousSearchNode;
+            this.priority = board.manhattan() + numberOfMovesMadeToReachTheBoard;
+
+        }
+
+        private Comparator<SearchNode> getComparatorByPriorityWithManhattanDistance() {
+            return new SearchNode.ByPriorityWithManhattanDistance();
         }
 
         private class ByPriorityWithManhattanDistance implements Comparator<SearchNode> {
             @Override
             public int compare(SearchNode o1, SearchNode o2) {
-                int priority1 = o1.manhattanDistance + numberOfMovesMadeToReachTheBoard;
-                int priority2 = o2.manhattanDistance + numberOfMovesMadeToReachTheBoard;
+                int priority1 = o1.priority;
+                int priority2 = o2.priority;
 
                 if (priority1 == priority2)
                     return 0;
@@ -49,47 +50,59 @@ public class Solver {
             throw new IllegalArgumentException();
 
 
-        SearchNode sn = new SearchNode(initial, numberOfMovesToReachTheBoard, null);
-        SearchNode snTwin = new SearchNode(initial.twin(), numberOfMovesToReachTheBoard, null);
+        int numberOfMovesMadeToReachTheBoard = 0;
+        Stack<Board> boardsSolution = new Stack<Board>();
 
-        MinPQ<SearchNode> minPQ = new MinPQ(sn.BY_MANHATTAN_DISTANCE);
-        MinPQ<SearchNode> minPQTwin = new MinPQ(snTwin.BY_MANHATTAN_DISTANCE);
+        SearchNode sn = new SearchNode(initial, numberOfMovesMadeToReachTheBoard, null);
+        SearchNode snTwin = new SearchNode(initial.twin(), numberOfMovesMadeToReachTheBoard, null);
+
+        MinPQ<SearchNode> minPQ = new MinPQ<SearchNode>(sn.getComparatorByPriorityWithManhattanDistance());
+        MinPQ<SearchNode> minPQTwin = new MinPQ<SearchNode>(snTwin.getComparatorByPriorityWithManhattanDistance());
         minPQ.insert(sn);
         minPQTwin.insert(snTwin);
 
         SearchNode snSolution = minPQ.delMin();
         SearchNode snSolutionTwin = minPQTwin.delMin();
 
-        queueOfBoardsSolution.enqueue(snSolution.currentBoard);
-        queueOfBoardsSolutionTwin.enqueue(snSolution.currentBoard);
+        solvable = snSolution.board.isGoal();
+        boolean twinSolvable = snSolutionTwin.board.isGoal();
 
-        solvable = snSolution.currentBoard.isGoal();
-        boolean twinSolvable = snSolutionTwin.currentBoard.isGoal();
         while (!solvable && !twinSolvable) {
+            numberOfMovesMadeToReachTheBoard = snSolution.numberOfMovesMadeToReachTheBoard + 1;
 
-            for (Board neighbor : snSolution.currentBoard.neighbors()) {
-                if (snSolution.previousBoard != null && snSolution.previousBoard.equals(neighbor))
+            for (Board neighbor : snSolution.board.neighbors()) {
+                if (snSolution.previousSearchNode != null && snSolution.previousSearchNode.board.equals(neighbor))
                     continue;
-                sn = new SearchNode(neighbor, numberOfMovesToReachTheBoard, initial);
+                sn = new SearchNode(neighbor, numberOfMovesMadeToReachTheBoard, snSolution);
                 minPQ.insert(sn);
             }
 
             snSolution = minPQ.delMin();
-            queueOfBoardsSolution.enqueue(snSolution.currentBoard);
-            solvable = snSolution.currentBoard.isGoal();
+            solvable = snSolution.board.isGoal();
 
-            for (Board neighbor : snSolutionTwin.currentBoard.neighbors()) {
-                if (snSolutionTwin.previousBoard != null && snSolutionTwin.previousBoard.equals(neighbor))
+            for (Board neighbor : snSolutionTwin.board.neighbors()) {
+                if (snSolutionTwin.previousSearchNode != null && snSolutionTwin.previousSearchNode.board.equals(neighbor))
                     continue;
-                snTwin = new SearchNode(neighbor, numberOfMovesToReachTheBoard, initial);
+                snTwin = new SearchNode(neighbor, numberOfMovesMadeToReachTheBoard, snSolutionTwin);
                 minPQTwin.insert(snTwin);
             }
 
             snSolutionTwin = minPQTwin.delMin();
-            queueOfBoardsSolutionTwin.enqueue(snSolution.currentBoard);
-            twinSolvable = snSolutionTwin.currentBoard.isGoal();
+            twinSolvable = snSolutionTwin.board.isGoal();
+        }
 
-            numberOfMovesToReachTheBoard++;
+        if (solvable) {
+            boardsSolution.push(snSolution.board);
+            SearchNode previousSearchNode = snSolution.previousSearchNode;
+            while (previousSearchNode != null) {
+                boardsSolution.push(previousSearchNode.board);
+                previousSearchNode = previousSearchNode.previousSearchNode;
+
+            }
+
+            while (!boardsSolution.isEmpty())
+                solution.enqueue(boardsSolution.pop());
+
         }
     }
 
@@ -102,7 +115,7 @@ public class Solver {
     public int moves() {
         if (!isSolvable())
             return -1;
-        return numberOfMovesToReachTheBoard;
+        return solution.size() - 1;
     }
 
     // sequence of boards in a shortest solution; null if unsolvable
@@ -110,14 +123,7 @@ public class Solver {
         if (!isSolvable())
             return null;
 
-        return new IterableBoardOfSolutions();
-    }
-
-    private class IterableBoardOfSolutions implements Iterable<Board> {
-        @Override
-        public Iterator<Board> iterator() {
-            return queueOfBoardsSolution.iterator();
-        }
+        return solution;
     }
 
     // test client (see below)
@@ -131,10 +137,6 @@ public class Solver {
             for (int j = 0; j < n; j++)
                 tiles[i][j] = in.readInt();
         Board initial = new Board(tiles);
-
-        Board twin = initial.twin();
-
-        StdOut.println(twin.toString());
 
         // solve the puzzle
         Solver solver = new Solver(initial);

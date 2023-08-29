@@ -123,7 +123,6 @@ public class KdTree {
         StdDraw.setPenColor(StdDraw.BLACK);
         StdDraw.filledCircle(x,y,0.005);
 
-
         if(level%2 == 1) {
             StdDraw.setPenColor(StdDraw.RED);
             if(left) {
@@ -159,154 +158,164 @@ public class KdTree {
 
     private double searchOddRight(Point2D p){
         double min = 1.0;
-        //if(root.point.y() > p.y())
-          //  min = root.point.y();
         return searchOddRight(root, p, 0, min);
     }
 
-    private double searchOddRight(Node x, Point2D key, int level, double min){
-        if (key == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
-        if(x == null) return 0.0;
+    private double searchOddRight(Node node, Point2D point, int level, double min){
+        if (point == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
+        if(node == null) return 0.0;
 
-        if(x.point.compareTo(key) == 0)
+        if(node.point.compareTo(point) == 0)
             return min;
 
-        double keyY = key.y();
-        double nodeY = x.point.y();
+        double keyX = point.x();
+        double keyY = point.y();
+        double nodeX = node.point.x();
+        double nodeY = node.point.y();
 
         level ++;
 
         if(level%2 == 1) {
-            if (key.x() < x.point.x()) {
-                return searchOddRight(x.left, key, level, min);
+            if (keyX < nodeX) {
+                return searchOddRight(node.left, point, level, min);
             }
             else {
-                return searchOddRight(x.right, key, level, min);
+                return searchOddRight(node.right, point, level, min);
             }
         }
         else {
+            if(nodeY == keyY)
+                return nodeY;
             if(nodeY > keyY && nodeY < min)
                 min = nodeY;
-            if (key.y() < x.point.y()) {
-                return searchOddRight(x.left, key, level, min);
+            if (keyY < nodeY) {
+                return searchOddRight(node.left, point, level, min);
             }
             else {
-                return searchOddRight(x.right, key, level, min);
+                return searchOddRight(node.right, point, level, min);
             }
         }
     }
 
     private double searchOddLeft(Point2D p){
         double max = 0.0;
-
         return searchOddLeft(root, p, 0, max);
     }
 
-    private double searchOddLeft(Node x, Point2D key, int level, double max){
-        if (key == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
-        if(x == null) return 0.0;
+    private double searchOddLeft(Node node, Point2D point, int level, double max){
+        if (point == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
+        if(node == null) return 0.0;
 
-        if(x.point.compareTo(key) == 0)
+        if(node.point.compareTo(point) == 0)
             return max;
 
-        double keyY = key.y();
-        double nodeY = x.point.y();
+        double keyX = point.x();
+        double keyY = point.y();
+        double nodeX = node.point.x();
+        double nodeY = node.point.y();
 
         level ++;
 
         if(level%2 == 1) {
-            if (key.x() < x.point.x()) {
-                return searchEvenLeft(x.left, key, level, max);
+            if (keyX < nodeX) {
+                return searchOddLeft(node.left, point, level, max);
             }
             else {
-                return searchEvenLeft(x.right, key, level, max);
+                return searchOddLeft(node.right, point, level, max);
             }
         }
         else {
+            if(nodeY == keyY)
+                return nodeY;
             if(nodeY < keyY && nodeY > max)
                 max = nodeY;
-            if (key.y() < x.point.y()) {
-                return searchEvenLeft(x.left, key, level, max);
+            if (keyY < nodeY) {
+                return searchOddLeft(node.left, point, level, max);
             }
             else {
-                return searchEvenLeft(x.right, key, level, max);
+                return searchOddLeft(node.right, point, level, max);
             }
         }
     }
 
     private double searchEvenRight(Point2D p){
         double min = 1.0;
-        //if(root.point.x() > p.x())
-          //  min = root.point.x();
         return searchEvenRight(root, p, 0, min);
     }
 
-    private double searchEvenRight(Node x, Point2D key, int level, double min){
-        if (key == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
-        if(x == null) return 0.0;
+    private double searchEvenRight(Node node, Point2D point, int level, double min){
+        if (point == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
+        if(node == null) return 0.0;
 
-        if(x.point.compareTo(key) == 0)
+        if(node.point.compareTo(point) == 0)
             return min;
 
-        double keyX = key.x();
-        double nodeX = x.point.x();
+        double keyX = point.x();
+        double keyY = point.y();
+        double nodeX = node.point.x();
+        double nodeY = node.point.y();
 
         level ++;
 
         if(level%2 == 1) {
+            if(keyX == nodeX)
+                return nodeX;
             if(nodeX > keyX && nodeX < min)
                 min = nodeX;
-            if (key.x() < x.point.x()) {
-                return searchEvenRight(x.left, key, level, min);
+            if (keyX < nodeX) {
+                return searchEvenRight(node.left, point, level, min);
             }
             else {
-                return searchEvenRight(x.right, key, level, min);
+                return searchEvenRight(node.right, point, level, min);
             }
         }
         else {
-            if (key.y() < x.point.y()) {
-                return searchEvenRight(x.left, key, level, min);
+            if (keyY < nodeY) {
+                return searchEvenRight(node.left, point, level, min);
             }
             else {
-                return searchEvenRight(x.right, key, level, min);
+                return searchEvenRight(node.right, point, level, min);
             }
         }
     }
 
     private double searchEvenLeft(Point2D p){
         double max = 0.0;
-
         return searchEvenLeft(root, p, 0, max);
     }
 
-    private double searchEvenLeft(Node x, Point2D key, int level, double max){
-        if (key == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
-        if(x == null) return 0.0;
+    private double searchEvenLeft(Node node, Point2D point, int level, double max){
+        if (point == null) throw new IllegalArgumentException("calls searchNodeXY() with a null key");
+        if(node == null) return 0.0;
 
-        if(x.point.compareTo(key) == 0)
+        if(node.point.compareTo(point) == 0)
             return max;
 
-        double keyX = key.x();
-        double nodeX = x.point.x();
+        double pX = point.x();
+        double pY = point.y();
+        double nodeX = node.point.x();
+        double nodeY = node.point.y();
 
         level ++;
 
         if(level%2 == 1) {
-            if(nodeX < keyX && nodeX > max)
+            if(nodeX == pX)
+                return nodeX;
+            if(nodeX < pX && nodeX > max)
                 max = nodeX;
-            if (key.x() < x.point.x()) {
-                return searchEvenLeft(x.left, key, level, max);
+            if (pX < nodeX) {
+                return searchEvenLeft(node.left, point, level, max);
             }
             else {
-                return searchEvenLeft(x.right, key, level, max);
+                return searchEvenLeft(node.right, point, level, max);
             }
         }
         else {
-            if (key.y() < x.point.y()) {
-                return searchEvenLeft(x.left, key, level, max);
+            if (pY < nodeY) {
+                return searchEvenLeft(node.left, point, level, max);
             }
             else {
-                return searchEvenLeft(x.right, key, level, max);
+                return searchEvenLeft(node.right, point, level, max);
             }
         }
     }
@@ -423,7 +432,6 @@ public class KdTree {
                         distance = tmpDistance;
                         nearest = current.point;
                     }
-
                 }
                 else {
                     nearP(current.left, p, p_x, p_y, level);
@@ -451,6 +459,17 @@ public class KdTree {
                 }
                 else {
                     nearP(current.right, p, p_x, p_y, level);
+                    tmpDistance = p.distanceSquaredTo(current.point);
+                    if(tmpDistance < distance) {
+                        distance = tmpDistance;
+                        nearest = current.point;
+                    }
+
+                    double d = Math.abs(p_x - current_x);
+                    if(distance > d*d)
+                    {
+                        nearP(current.left, p, p_x, p_y, level);
+                    }
                 }
             }
         }
@@ -492,13 +511,20 @@ public class KdTree {
                 }
                 else {
                     nearP(current.right, p, p_x, p_y, level);
+                    // current node is closer than the current best
+                    tmpDistance = p.distanceSquaredTo(current.point);
+                    if(tmpDistance < distance) {
+                        distance = tmpDistance;
+                        nearest = current.point;
+                    }
+                    double d = Math.abs(p_y - current_y);
+                    if(distance > d*d)
+                    {
+                        nearP(current.left, p, p_x, p_y, level);
+                    }
                 }
             }
-
         }
-
-
-
     }
 
     private boolean isLeaf(Node n){
@@ -537,7 +563,7 @@ public class KdTree {
 
          */
 
-        Point2D targetPoint = new Point2D(0.48, 0.15);
+        Point2D targetPoint = new Point2D(0.81, 0.30);
         StdDraw.filledCircle(targetPoint.x(),targetPoint.y(),0.005);
         Point2D nearestPoint = points.nearest(targetPoint);
         StdOut.println(nearestPoint);

@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdDraw;
+import edu.princeton.cs.algs4.StdRandom;
 
 public class KdTree {
     private Node root;
@@ -408,11 +409,6 @@ public class KdTree {
             return null;
 
         distance = Double.POSITIVE_INFINITY;
-        if (count != size) {
-            setNodeFromTo();
-            count = size;
-        }
-
         computeNearest(p);
         return nearest;
     }
@@ -424,20 +420,10 @@ public class KdTree {
         nearP(root, p, pX, pY, 0);
     }
 
-    private void computeMinDistance(double tmpDistance, Node current) {
-        if (tmpDistance < distance) {
-            distance = tmpDistance;
-            nearest = current.point;
-        }
-    }
-
-
     private void nearP(Node current, Point2D p, double pX, double pY, int level) {
 
         if (current == null)
             return;
-
-        StdOut.println(current.point);
 
         double currentX = current.point.x();
         double currentY = current.point.y();
@@ -451,24 +437,15 @@ public class KdTree {
             if (pX < currentX) {
                 if (isLeaf(current)) {
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
-
+                    setMinDistance(tmpDistance, current.point);
                 } else {
                     nearP(current.left, p, pX, pY, level);
 
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
-
-                    if (pY >= current.from.y() && pY <= current.to.y()) {
-                        double d = pX - currentX;
-                        if (distance > d * d) {
-                            nearP(current.right, p, pX, pY, level);
-                        }
-                    } else {
-                        double distanceToSurface = p.distanceSquaredTo(current.to);
-                        if (distance > distanceToSurface) {
-                            nearP(current.right, p, pX, pY, level);
-                        }
+                    setMinDistance(tmpDistance, current.point);
+                    double d = pX - currentX;
+                    if (distance > d * d) {
+                        nearP(current.right, p, pX, pY, level);
                     }
                 }
             }
@@ -476,24 +453,15 @@ public class KdTree {
             else {
                 if (isLeaf(current)) {
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
-
+                    setMinDistance(tmpDistance, current.point);
                 } else {
                     nearP(current.right, p, pX, pY, level);
-
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
+                    setMinDistance(tmpDistance, current.point);
 
-                    if (pY >= current.from.y() && pY <= current.to.y()) {
-                        double d = pX - currentX;
-                        if (distance > d * d) {
-                            nearP(current.left, p, pX, pY, level);
-                        }
-                    } else {
-                        double distanceToSurface = p.distanceSquaredTo(current.to);
-                        if (distance > distanceToSurface) {
-                            nearP(current.left, p, pX, pY, level);
-                        }
+                    double d = pX - currentX;
+                    if (distance > d * d) {
+                        nearP(current.left, p, pX, pY, level);
                     }
                 }
             }
@@ -505,23 +473,15 @@ public class KdTree {
             if (pY < currentY) {
                 if (isLeaf(current)) {
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
+                    setMinDistance(tmpDistance, current.point);
                 } else {
                     nearP(current.left, p, pX, pY, level);
-
+                    // current node is closer than the current best
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
-
-                    if (pX >= current.from.x() && pX <= current.to.x()) {
-                        double d = pY - currentY;
-                        if (distance > d * d) {
-                            nearP(current.right, p, pX, pY, level);
-                        }
-                    } else {
-                        double distanceToSurface = p.distanceSquaredTo(current.to);
-                        if (distance > distanceToSurface) {
-                            nearP(current.right, p, pX, pY, level);
-                        }
+                    setMinDistance(tmpDistance, current.point);
+                    double d = pY - currentY;
+                    if (distance > d * d) {
+                        nearP(current.right, p, pX, pY, level);
                     }
                 }
             }
@@ -529,26 +489,25 @@ public class KdTree {
             else {
                 if (isLeaf(current)) {
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
+                    setMinDistance(tmpDistance, current.point);
                 } else {
                     nearP(current.right, p, pX, pY, level);
-
+                    // current node is closer than the current best
                     tmpDistance = p.distanceSquaredTo(current.point);
-                    computeMinDistance(tmpDistance, current);
-
-                    if (pX >= current.from.x() && pX <= current.to.x()) {
-                        double d = pY - currentY;
-                        if (distance > d * d) {
-                            nearP(current.left, p, pX, pY, level);
-                        }
-                    } else {
-                        double distanceToSurface = p.distanceSquaredTo(current.to);
-                        if (distance > distanceToSurface) {
-                            nearP(current.left, p, pX, pY, level);
-                        }
+                    setMinDistance(tmpDistance, current.point);
+                    double d = pY - currentY;
+                    if (distance > d * d) {
+                        nearP(current.left, p, pX, pY, level);
                     }
                 }
             }
+        }
+    }
+
+    private void setMinDistance(double tempDistance, Point2D currentPoint) {
+        if (tempDistance < distance) {
+            distance = tempDistance;
+            nearest = currentPoint;
         }
     }
 
@@ -568,7 +527,17 @@ public class KdTree {
             points.insert(p);
         }
 
-        Point2D p = new Point2D(0.6, 0.9);
+        int a = 9;
+
+        for (int i = 0; i < 1000 ; i++) {
+            double x = StdRandom.uniformDouble();
+            double y = StdRandom.uniformDouble();
+
+            Point2D targetPoint = new Point2D(x, y);
+            StdOut.println("x="+x+",y="+y+" Nearest [" + i + "] : " + points.nearest(targetPoint));
+        }
+
+/*        Point2D p = new Point2D(0.6, 0.9);
         // StdOut.println(points.contains(p));
 
         //points.draw();
@@ -597,5 +566,8 @@ public class KdTree {
         Point2D targetPoint3 = new Point2D(0.40, 0.52);
         Point2D nearestPoint3 = points.nearest(targetPoint3);
         StdOut.println("Nearest : " + nearestPoint2);
+
+
+ */
     }
 }

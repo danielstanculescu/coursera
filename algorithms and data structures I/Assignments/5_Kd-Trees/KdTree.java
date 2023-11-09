@@ -14,17 +14,16 @@ public class KdTree {
     private int size = 0;
     private double distance = Double.POSITIVE_INFINITY;
     private Point2D nearest = null;
+    private final LinkedList<Double> vertical = new LinkedList<Double>();
+    private final LinkedList<Double> horizontal = new LinkedList<Double>();
 
     private static class Node {
         private final Point2D point;
-        private final Point2D from;
-        private final Point2D to;
+        private double pointLimitFromX = -1.0, pointLimitFromY = -1.0, pointLimitToX = -1.0, pointLimitToY = -1.0;
         private Node left, right;
 
-        public Node(Point2D point, Point2D from, Point2D to) {
+        public Node(Point2D point) {
             this.point = point;
-            this.from = from;
-            this.to = to;
         }
     }
 
@@ -43,29 +42,17 @@ public class KdTree {
         return size;
     }
 
-    private final LinkedList<Double> vertical = new LinkedList<Double>();
-    private final LinkedList<Double> horizontal = new LinkedList<Double>();
-
     // add the point to the set (if it is not already in the set)
     public void insert(Point2D p) {
         if (p == null) throw new IllegalArgumentException("calls insert() with a null key");
 
-        if (size == 0) {
-            vertical.add(0.0);
-            vertical.add(1.0);
-        } else if (size == 1) {
-            horizontal.add(0.0);
-            horizontal.add(1.0);
-        }
-
-        root = insert(root, p, 0, p.x(), 0.0, p.x(), 1.0);
+        root = insert(root, p, 0);
     }
 
-    private Node insert(Node h, Point2D key, int level, double fromX, double fromY, double toX, double toY) {
+    private Node insert(Node h, Point2D key, int level) {
         if (h == null) {
             size++;
-
-            return new Node(key, new Point2D(fromX, fromY), new Point2D(toX, toY));
+            return new Node(key);
         }
 
         if (key.compareTo(h.point) == 0)
@@ -74,90 +61,15 @@ public class KdTree {
         level++;
 
         if (level % 2 == 1) {
-            if (key.x() < h.point.x()) {
-                if (!horizontal.contains(h.point.x())) {
-                    horizontal.add(h.point.x());
-                    double currentX = key.x();
-                    horizontal.add(currentX);
-                    Collections.sort(horizontal);
-                    int index = horizontal.indexOf(currentX);
-                    if (index > 0)
-                        fromX = horizontal.get(index - 1);
-                    else
-                        fromX = horizontal.get(0);
-                    fromY = key.y();
-                    if (index < horizontal.size() - 1)
-                        toX = horizontal.get(index + 1);
-                    else
-                        toX = horizontal.get(horizontal.size() - 1);
-                    toY = key.y();
-                    horizontal.remove(currentX);
-                }
-
-                h.left = insert(h.left, key, level, fromX, fromY, toX, toY);
-            } else {
-                if (!horizontal.contains(h.point.x())) {
-                    horizontal.add(h.point.x());
-                    double currentX = key.x();
-                    horizontal.add(currentX);
-                    Collections.sort(horizontal);
-                    int index = horizontal.indexOf(currentX);
-                    if (index > 0)
-                        fromX = horizontal.get(index - 1);
-                    else
-                        fromX = horizontal.get(0);
-                    fromY = key.y();
-                    if (index < horizontal.size() - 1)
-                        toX = horizontal.get(index + 1);
-                    else
-                        toX = horizontal.get(horizontal.size() - 1);
-                    toY = key.y();
-                    horizontal.remove(currentX);
-                }
-                h.right = insert(h.right, key, level, fromX, fromY, toX, toY);
-            }
+            if (key.x() < h.point.x())
+                h.left = insert(h.left, key, level);
+            else
+                h.right = insert(h.right, key, level);
         } else {
-            if (key.y() < h.point.y()) {
-                if (!vertical.contains(h.point.y())) {
-                    vertical.add(h.point.y());
-                    double currentY = key.y();
-                    vertical.add(currentY);
-                    Collections.sort(vertical);
-                    int index = vertical.indexOf(currentY);
-                    fromX = key.x();
-                    if (index > 0)
-                        fromY = vertical.get(index - 1);
-                    else
-                        fromY = vertical.get(0);
-                    toX = key.x();
-                    if (index < vertical.size() - 1)
-                        toY = vertical.get(index + 1);
-                    else
-                        toY = horizontal.get(vertical.size() - 1);
-                    vertical.remove(currentY);
-                }
-                h.left = insert(h.left, key, level, fromX, fromY, toX, toY);
-            } else {
-                if (!vertical.contains(h.point.y())) {
-                    vertical.add(h.point.y());
-                    double currentY = key.y();
-                    vertical.add(currentY);
-                    Collections.sort(vertical);
-                    int index = vertical.indexOf(currentY);
-                    fromX = key.x();
-                    if (index > 0)
-                        fromY = vertical.get(index - 1);
-                    else
-                        fromY = vertical.get(0);
-                    toX = key.x();
-                    if (index < vertical.size() - 1)
-                        toY = vertical.get(index + 1);
-                    else
-                        toY = horizontal.get(vertical.size() - 1);
-                    vertical.remove(currentY);
-                }
-                h.right = insert(h.right, key, level, fromX, fromY, toX, toY);
-            }
+            if (key.y() < h.point.y())
+                h.left = insert(h.left, key, level);
+            else
+                h.right = insert(h.right, key, level);
         }
         return h;
     }
@@ -450,11 +362,18 @@ public class KdTree {
         }
     }
 
-    private void setMinDistance(double tmpDistance, Point2D point) {
-        if (tmpDistance < distance) {
-            distance = tmpDistance;
+    private void setMinDistance(Point2D reference, Point2D point) {
+
+        if (reference.distanceSquaredTo(point) < distance) {
+            distance = reference.distanceSquaredTo(point);
             nearest = point;
         }
+    }
+
+    private double distanceSquaredTo(Point2D p, double thatX, double thatY) {
+        double dx = p.x() - thatX;
+        double dy = p.y() - thatY;
+        return dx*dx + dy*dy;
     }
 
     // a nearest neighbor in the set to point p; null if the set is empty
@@ -465,66 +384,150 @@ public class KdTree {
             return null;
 
         distance = Double.POSITIVE_INFINITY;
-        computeNearest(p);
+        vertical.clear();
+        horizontal.clear();
+        vertical.add(0.0);
+        vertical.add(1.0);
+        horizontal.add(0.0);
+        horizontal.add(1.0);
+        computeNearest(root, p, 0, null);
         return nearest;
     }
 
-    private void computeNearest(Point2D p) {
-
-        double pX = p.x();
-        double pY = p.y();
-        nearP(root, p, pX, pY, 0);
-    }
-
-    private void nearP(Node current, Point2D p, double pX, double pY, int level) {
+    private void computeNearest(Node current, Point2D p, int level, Point2D prev) {
 
         if (current == null)
             return;
 
         double currentX = current.point.x();
         double currentY = current.point.y();
-
-        double tmpDistance;
+        double pX = p.x();
+        double pY = p.y();
 
         level++;
 
         // vertical
         if (level % 2 == 1) {
+            if (current.pointLimitFromX == -1) {
+                if (!vertical.contains(currentX)) {
+                    vertical.add(currentX);
+                }
+
+                if(horizontal.contains(currentY)) {
+                    if(horizontal.size() == 2) {
+                        current.pointLimitFromX = currentX;
+                        current.pointLimitFromY = horizontal.getFirst();
+
+                        current.pointLimitToX = currentX;
+                        current.pointLimitToY = horizontal.getLast();
+                    }
+                    else {
+                        Collections.sort(horizontal);
+                        int index = horizontal.indexOf(currentY);
+                        current.pointLimitFromX = currentX;
+
+                        current.pointLimitFromY = prev.y();
+                        /*if (index > 0)
+                            current.pointLimitFromY = horizontal.get(index);
+                        else
+                            current.pointLimitFromY = horizontal.get(0);
+
+
+                         */
+
+
+                        current.pointLimitToX = currentX;
+                        if (index < horizontal.size() - 1)
+                            current.pointLimitToY = horizontal.get(index + 1);
+                        else
+                            current.pointLimitToY = horizontal.get(horizontal.size() - 1);
+                    }
+                }
+                else {
+                    horizontal.add(currentY);
+                    Collections.sort(horizontal);
+                    int index = horizontal.indexOf(currentY);
+
+                    current.pointLimitFromX = currentX;
+                    current.pointLimitFromY = prev.y();
+                    /*
+                    if (index > 0)
+                        current.pointLimitFromY = horizontal.get(index - 1);
+                    else
+                        current.pointLimitFromY = horizontal.get(0);
+
+                     */
+
+                    current.pointLimitToX = currentX;
+                    if (index < horizontal.size() - 1)
+                        current.pointLimitToY = horizontal.get(index + 1);
+                    else
+                        current.pointLimitToY = horizontal.get(horizontal.size() - 1);
+                    horizontal.remove(currentY);
+                }
+            }
+
             // left
             if (pX < currentX) {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
                 } else {
-                    nearP(current.left, p, pX, pY, level);
+                    computeNearest(current.left, p, level, current.point);
 
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
 
-                    double d = pX - currentX;
-                    if (distance > d * d) {
-                        nearP(current.right, p, pX, pY, level);
-
+                    // direct line
+                    if (pY >= current.pointLimitFromY && pY <= current.pointLimitToY) {
+                        double d = pX - currentX;
+                        if (distance > d * d) {
+                            computeNearest(current.right, p, level, current.point);
+                        }
+                    }
+                    // line to the edge
+                    else {
+                        if (pY > current.pointLimitToY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitToY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.right, p, level, current.point);
+                            }
+                        } else if (pY < current.pointLimitFromY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitFromY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.right, p, level, current.point);
+                            }
+                        }
                     }
                 }
             }
             // right
             else {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-
+                    setMinDistance(p, current.point);
                 } else {
-                    nearP(current.right, p, pX, pY, level);
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    computeNearest(current.right, p, level, current.point);
 
-                    double d = pX - currentX;
-                    if (distance > d * d) {
-                        nearP(current.left, p, pX, pY, level);
+                    setMinDistance(p, current.point);
 
-
-
+                    // direct line
+                    if (pY >= current.pointLimitFromY && pY <= current.pointLimitToY) {
+                        double d = pX - currentX;
+                        if (distance > d * d) {
+                            computeNearest(current.left, p, level, current.point);
+                        }
+                    }
+                    // line to the edge
+                    else {
+                        if (pY > current.pointLimitToY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitToY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.left, p, level, current.point);
+                            }
+                        } else if (pY < current.pointLimitFromY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitFromY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.left, p, level, current.point);
+                            }
+                        }
                     }
                 }
             }
@@ -532,36 +535,111 @@ public class KdTree {
 
         // horizontal
         else {
+            if (current.pointLimitFromX == -1) {
+                if (!horizontal.contains(currentY)) {
+                    horizontal.add(currentY);
+                }
+
+                if (vertical.contains(currentX)) {
+
+                    Collections.sort(vertical);
+                    int index = vertical.indexOf(currentX);
+
+                    current.pointLimitFromY = currentY;
+                    current.pointLimitFromX = prev.x();
+/*
+                    if (index > 0)
+                        current.pointLimitFromX = vertical.get(index);
+                    else
+                        current.pointLimitFromX = vertical.get(0);
+
+ */
+                    current.pointLimitToY = currentY;
+                    if (index < vertical.size() - 1)
+                        current.pointLimitToX = vertical.get(index + 1);
+                    else
+                        current.pointLimitToX = vertical.get(vertical.size() - 1);
+                }
+                else {
+                    vertical.add(currentX);
+                    Collections.sort(vertical);
+                    int index = vertical.indexOf(currentX);
+
+                    current.pointLimitFromY = currentY;
+                    current.pointLimitFromX = prev.x();
+                    /*
+                    if (index > 0)
+                        current.pointLimitFromX = vertical.get(index - 1);
+                    else
+                        current.pointLimitFromX = vertical.get(0);
+
+                     */
+
+                    current.pointLimitToY = currentY;
+                    if (index < vertical.size() - 1)
+                        current.pointLimitToX = vertical.get(index + 1);
+                    else
+                        current.pointLimitToX = vertical.get(vertical.size() - 1);
+                    //if(valueAdded)
+                    vertical.remove(currentX);
+                }
+            }
+
             // down
             if (pY < currentY) {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
                 } else {
-                    nearP(current.left, p, pX, pY, level);
-                    // current node is closer than the current best
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-                    double d = pY - currentY;
-                    if (distance > d * d) {
-                        nearP(current.right, p, pX, pY, level);
+                    computeNearest(current.left, p, level, current.point);
+
+                    setMinDistance(p, current.point);
+
+                    if (pX >= current.pointLimitFromX && pX <= current.pointLimitToX) {
+                        double d = pY - currentY;
+                        if (distance > d * d) {
+                            computeNearest(current.right, p, level, current.point);
+                        }
+                    } else {
+                        if (pX > current.pointLimitToX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitToX, currentY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.right, p, level, current.point);
+                            }
+                        } else if (pX < current.pointLimitFromX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitFromX, currentY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.right, p, level, current.point);
+                            }
+                        }
                     }
                 }
             }
             // up
             else {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-
+                    setMinDistance(p, current.point);
                 } else {
-                    nearP(current.right, p, pX, pY, level);
-                    // current node is closer than the current best
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-                    double d = pY - currentY;
-                    if (distance > d * d) {
-                        nearP(current.left, p, pX, pY, level);
+                    computeNearest(current.right, p, level, current.point);
+
+                    setMinDistance(p, current.point);
+
+                    if (pX >= current.pointLimitFromX && pX <= current.pointLimitToX) {
+                        double d = pY - currentY;
+                        if (distance > d * d) {
+                            computeNearest(current.left, p, level, current.point);
+                        }
+                    } else {
+                        if (pX > current.pointLimitToX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitToX, currentY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.left, p, level, current.point);
+                            }
+                        } else if (pX < current.pointLimitFromX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitFromX, currentY);
+                            if (distance > distanceToSurface) {
+                                computeNearest(current.left, p, level, current.point);
+                            }
+                        }
                     }
                 }
             }
@@ -584,15 +662,41 @@ public class KdTree {
             points.insert(p);
         }
 
-        int a = 9;
+         // points.draw();
 
-        for (int i = 0; i < 1000 ; i++) {
+        Point2D target = new Point2D(1.0, 0.25);
+         // StdDraw.filledCircle(target.x(), target.y(), 0.005);
+        StdOut.println(points.nearest(target));
+int a = 9;
+        /*
+        for (int i = 0; i < 1000000; i++) {
+
             double x = StdRandom.uniformDouble();
             double y = StdRandom.uniformDouble();
 
             Point2D targetPoint = new Point2D(x, y);
-            StdOut.println("x="+x+",y="+y+" Nearest [" + i + "] : " + points.nearest(targetPoint));
+            StdOut.println("x=" + x + ",y=" + y + " Nearest [" + i + "] : " + points.nearest(targetPoint));
+            // points.insert(new Point2D(x,y));
         }
 
+        points.insert(new Point2D(0.2,0.6));
+        Point2D target = new Point2D(0.915, 0.471);
+        // StdDraw.filledCircle(target.x(), target.y(), 0.005);
+        StdOut.println(points.nearest(target));
+         */
+        /*
+        Point2D target3 = new Point2D(0.2, 0.3);
+        StdDraw.filledCircle(target3.x(), target3.y(), 0.005);
+        StdOut.println(points.nearest(target3));
+
+        Point2D target2 = new Point2D(0.6, 0.7);
+        StdDraw.filledCircle(target2.x(), target2.y(), 0.005);
+        StdOut.println(points.nearest(target2));
+
+
+        Point2D target = new Point2D(0.915, 0.471);
+        StdDraw.filledCircle(target.x(), target.y(), 0.005);
+        StdOut.println(points.nearest(target));
+         */
     }
 }

@@ -18,14 +18,11 @@ public class KdTree {
 
     private static class Node {
         private final Point2D point;
-        private final Point2D from;
-        private final Point2D to;
+        private double pointLimitFromX = -1.0, pointLimitFromY = -1.0, pointLimitToX = -1.0, pointLimitToY = -1.0;
         private Node left, right;
 
-        public Node(Point2D point, Point2D from, Point2D to) {
+        public Node(Point2D point) {
             this.point = point;
-            this.from = from;
-            this.to = to;
         }
     }
 
@@ -44,29 +41,18 @@ public class KdTree {
         return size;
     }
 
-    private final LinkedList<Double> vertical = new LinkedList<Double>();
-    private final LinkedList<Double> horizontal = new LinkedList<Double>();
-
     // add the point to the set (if it is not already in the set)
     public void insert(Point2D p) {
         if (p == null) throw new IllegalArgumentException("calls insert() with a null key");
 
-        if (size == 0) {
-            vertical.add(0.0);
-            vertical.add(1.0);
-        } else if (size == 1) {
-            horizontal.add(0.0);
-            horizontal.add(1.0);
-        }
-
-        root = insert(root, p, 0, p.x(), 0.0, p.x(), 1.0);
+        root = insert(root, p, 0);
     }
 
-    private Node insert(Node h, Point2D key, int level, double fromX, double fromY, double toX, double toY) {
+    private Node insert(Node h, Point2D key, int level) {
         if (h == null) {
             size++;
 
-            return new Node(key, new Point2D(fromX, fromY), new Point2D(toX, toY));
+            return new Node(key);
         }
 
         if (key.compareTo(h.point) == 0)
@@ -75,90 +61,16 @@ public class KdTree {
         level++;
 
         if (level % 2 == 1) {
-            if (key.x() < h.point.x()) {
-                if (!horizontal.contains(h.point.x())) {
-                    horizontal.add(h.point.x());
-                    double currentX = key.x();
-                    horizontal.add(currentX);
-                    Collections.sort(horizontal);
-                    int index = horizontal.indexOf(currentX);
-                    if (index > 0)
-                        fromX = horizontal.get(index - 1);
-                    else
-                        fromX = horizontal.get(0);
-                    fromY = key.y();
-                    if (index < horizontal.size() - 1)
-                        toX = horizontal.get(index + 1);
-                    else
-                        toX = horizontal.get(horizontal.size() - 1);
-                    toY = key.y();
-                    horizontal.remove(currentX);
-                }
+            if (key.x() < h.point.x())
+                h.left = insert(h.left, key, level);
+            else
+                h.right = insert(h.right, key, level);
 
-                h.left = insert(h.left, key, level, fromX, fromY, toX, toY);
-            } else {
-                if (!horizontal.contains(h.point.x())) {
-                    horizontal.add(h.point.x());
-                    double currentX = key.x();
-                    horizontal.add(currentX);
-                    Collections.sort(horizontal);
-                    int index = horizontal.indexOf(currentX);
-                    if (index > 0)
-                        fromX = horizontal.get(index - 1);
-                    else
-                        fromX = horizontal.get(0);
-                    fromY = key.y();
-                    if (index < horizontal.size() - 1)
-                        toX = horizontal.get(index + 1);
-                    else
-                        toX = horizontal.get(horizontal.size() - 1);
-                    toY = key.y();
-                    horizontal.remove(currentX);
-                }
-                h.right = insert(h.right, key, level, fromX, fromY, toX, toY);
-            }
         } else {
-            if (key.y() < h.point.y()) {
-                if (!vertical.contains(h.point.y())) {
-                    vertical.add(h.point.y());
-                    double currentY = key.y();
-                    vertical.add(currentY);
-                    Collections.sort(vertical);
-                    int index = vertical.indexOf(currentY);
-                    fromX = key.x();
-                    if (index > 0)
-                        fromY = vertical.get(index - 1);
-                    else
-                        fromY = vertical.get(0);
-                    toX = key.x();
-                    if (index < vertical.size() - 1)
-                        toY = vertical.get(index + 1);
-                    else
-                        toY = horizontal.get(vertical.size() - 1);
-                    vertical.remove(currentY);
-                }
-                h.left = insert(h.left, key, level, fromX, fromY, toX, toY);
-            } else {
-                if (!vertical.contains(h.point.y())) {
-                    vertical.add(h.point.y());
-                    double currentY = key.y();
-                    vertical.add(currentY);
-                    Collections.sort(vertical);
-                    int index = vertical.indexOf(currentY);
-                    fromX = key.x();
-                    if (index > 0)
-                        fromY = vertical.get(index - 1);
-                    else
-                        fromY = vertical.get(0);
-                    toX = key.x();
-                    if (index < vertical.size() - 1)
-                        toY = vertical.get(index + 1);
-                    else
-                        toY = horizontal.get(vertical.size() - 1);
-                    vertical.remove(currentY);
-                }
-                h.right = insert(h.right, key, level, fromX, fromY, toX, toY);
-            }
+            if (key.y() < h.point.y())
+                h.left = insert(h.left, key, level);
+            else
+                h.right = insert(h.right, key, level);
         }
         return h;
     }
@@ -451,6 +363,21 @@ public class KdTree {
         }
     }
 
+    private HashMap<Double, MinMax> h = new HashMap<Double, MinMax>();
+    private HashMap<Double, MinMax> v = new HashMap<Double, MinMax>();
+
+    private void setMinDistance(Point2D reference, Point2D point) {
+        if (reference.distanceSquaredTo(point) < distance) {
+            distance = reference.distanceSquaredTo(point);
+            nearest = point;
+        }
+    }
+
+    private double distanceSquaredTo(Point2D p, double thatX, double thatY) {
+        double dx = p.x() - thatX;
+        double dy = p.y() - thatY;
+        return dx * dx + dy * dy;
+    }
 
     // a nearest neighbor in the set to point p; null if the set is empty
     public Point2D nearest(Point2D p) {
@@ -460,68 +387,126 @@ public class KdTree {
             return null;
 
         distance = Double.POSITIVE_INFINITY;
-        computeNearest(p);
+
+        // init
+        if (root.pointLimitFromX == -1) {
+            v.put(0.0, new MinMax(0.0, 1.0));
+            v.put(1.0, new MinMax(0.0, 1.0));
+
+            h.put(0.0, new MinMax(0.0, 1.0));
+            h.put(1.0, new MinMax(0.0, 1.0));
+        }
+
+        computeNearest(root, p, 0);
+
         return nearest;
     }
 
-    private void setMinDistance(double tmpDistance, Point2D point) {
-        if (tmpDistance < distance) {
-            distance = tmpDistance;
-            nearest = point;
-        }
-    }
-
-    private void computeNearest(Point2D p) {
-
-        double p_x = p.x();
-        double p_y = p.y();
-        nearP(root, p, p_x, p_y, 0);
-    }
-
-    private void nearP(Node current, Point2D p, double p_x, double p_y, int level) {
+    private void computeNearest(Node current, Point2D p, int level) {
 
         if (current == null)
             return;
 
-        double current_x = current.point.x();
-        double current_y = current.point.y();
-        double tmpDistance;
+        double currentX = current.point.x();
+        double currentY = current.point.y();
+        double pX = p.x();
+        double pY = p.y();
 
         level++;
 
         // vertical
         if (level % 2 == 1) {
-            // left
-            if (p_x < current_x) {
-                if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-                } else {
-                    nearP(current.left, p, p_x, p_y, level);
+            if (current.pointLimitFromX == -1) {
+                ArrayList<Double> sortedKeys = new ArrayList<Double>(h.keySet());
 
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                Collections.sort(sortedKeys);
 
-                    double d = p_x - current_x;
-                    if (distance > d * d) {
-                        nearP(current.right, p, p_x, p_y, level);
+                if (sortedKeys.contains(currentY)) {
+                    int indexCurrentValue = sortedKeys.indexOf(currentY);
+                    if (currentY == 1.0) {
+                        current.pointLimitFromX = currentX;
+                        current.pointLimitFromY = getValidLess(indexCurrentValue, sortedKeys, currentX, true);
+                        current.pointLimitToX = currentX;
+                        current.pointLimitToY = 1.0;
+                    } else {
+                        current.pointLimitFromX = currentX;
+                        current.pointLimitFromY = getValidLess(indexCurrentValue, sortedKeys, currentX, true);
+                        current.pointLimitToX = currentX;
+                        current.pointLimitToY = getValidNext(indexCurrentValue, sortedKeys, currentX, true);
                     }
+                } else {
+                    sortedKeys.add(currentY);
+                    Collections.sort(sortedKeys);
+                    int indexCurrentValue = sortedKeys.indexOf(currentY);
+                    current.pointLimitFromX = currentX;
+                    current.pointLimitFromY = getValidLess(indexCurrentValue, sortedKeys, currentX, true);
+                    current.pointLimitToX = currentX;
+                    current.pointLimitToY = getValidNext(indexCurrentValue, sortedKeys, currentX, true);
+                    sortedKeys.remove(currentY);
+                }
+
+                if (!v.containsKey(currentX)) {
+                    v.put(currentX, new MinMax(current.pointLimitFromY, current.pointLimitToY));
+                }
+            }
+            // left
+            if (pX < currentX) {
+                if (isLeaf(current)) {
+                    setMinDistance(p, current.point);
+                } else {
+                    computeNearest(current.left, p, level);
+
+                    setMinDistance(p, current.point);
+
+                    // direct line
+                    if (pY >= current.pointLimitFromY && pY <= current.pointLimitToY) {
+                        double d = pX - currentX;
+                        if (distance > d * d) {
+                            computeNearest(current.right, p, level);
+                        }
+                    }
+                    // line to the edge
+                    else {
+                        if (pY > current.pointLimitToY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitToY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.right, p, level);
+                        } else if (pY < current.pointLimitFromY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitFromY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.right, p, level);
+                        }
+                    }
+
                 }
             }
             // right
             else {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
-
+                    setMinDistance(p, current.point);
                 } else {
-                    nearP(current.right, p, p_x, p_y, level);
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    computeNearest(current.right, p, level);
 
-                    double d = p_x - current_x;
-                    if (distance > d * d) {
-                        nearP(current.left, p, p_x, p_y, level);
+                    setMinDistance(p, current.point);
+
+                    // direct line
+                    if (pY >= current.pointLimitFromY && pY <= current.pointLimitToY) {
+                        double d = pX - currentX;
+                        if (distance > d * d) {
+                            computeNearest(current.left, p, level);
+                        }
+                    }
+                    // line to the edge
+                    else {
+                        if (pY > current.pointLimitToY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitToY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.left, p, level);
+                        } else if (pY < current.pointLimitFromY) {
+                            double distanceToSurface = distanceSquaredTo(p, currentX, current.pointLimitFromY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.left, p, level);
+                        }
                     }
                 }
             }
@@ -529,39 +514,98 @@ public class KdTree {
 
         // horizontal
         else {
+            if (current.pointLimitFromX == -1) {
+                ArrayList<Double> sortedKeys = new ArrayList<Double>(v.keySet());
+                Collections.sort(sortedKeys);
+
+                if (sortedKeys.contains(currentX)) {
+                    int indexCurrentValue = sortedKeys.indexOf(currentX);
+                    if (currentX == 1.0) {
+                        current.pointLimitFromX = getValidLess(indexCurrentValue, sortedKeys, currentY, false);
+                        current.pointLimitFromY = currentY;
+                        current.pointLimitToX = 1.0;
+                        current.pointLimitToY = currentY;
+                    } else {
+                        current.pointLimitFromX = getValidLess(indexCurrentValue, sortedKeys, currentY, false);
+                        current.pointLimitFromY = currentY;
+                        current.pointLimitToX = getValidNext(indexCurrentValue, sortedKeys, currentY, false);
+                        current.pointLimitToY = currentY;
+                    }
+                } else {
+                    sortedKeys.add(currentX);
+                    Collections.sort(sortedKeys);
+                    int indexCurrentValue = sortedKeys.indexOf(currentX);
+                    current.pointLimitFromX = getValidLess(indexCurrentValue, sortedKeys, currentY, false);
+                    current.pointLimitFromY = currentY;
+                    current.pointLimitToX = getValidNext(indexCurrentValue, sortedKeys, currentY, false);
+                    current.pointLimitToY = currentY;
+                    sortedKeys.remove(currentX);
+                }
+
+                if (!h.containsKey(currentY)) {
+                    h.put(currentY, new MinMax(current.pointLimitFromX, current.pointLimitToX));
+                }
+            }
             // down
-            if (p_y < current_y) {
+            if (pY < currentY) {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
 
                 } else {
-                    nearP(current.left, p, p_x, p_y, level);
+                    computeNearest(current.left, p, level);
                     // current node is closer than the current best
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
 
-                    double d = p_y - current_y;
-                    if (distance > d * d) {
-                        nearP(current.right, p, p_x, p_y, level);
+                    // direct line
+                    if (pX >= current.pointLimitFromX && pX <= current.pointLimitToX) {
+                        double d = pY - currentY;
+                        if (distance > d * d) {
+                            computeNearest(current.right, p, level);
+                        }
                     }
+                    // line to the edge
+                    else {
+                        if (pX > current.pointLimitToX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitToX, currentY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.right, p, level);
+                        } else if (pX < current.pointLimitFromX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitFromX, currentY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.right, p, level);
+                        }
+                    }
+
                 }
             }
             // up
             else {
                 if (isLeaf(current)) {
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
 
                 } else {
-                    nearP(current.right, p, p_x, p_y, level);
+                    computeNearest(current.right, p, level);
                     // current node is closer than the current best
-                    tmpDistance = p.distanceSquaredTo(current.point);
-                    setMinDistance(tmpDistance, current.point);
+                    setMinDistance(p, current.point);
 
-                    double d = p_y - current_y;
-                    if (distance > d * d) {
-                        nearP(current.left, p, p_x, p_y, level);
+                    // direct line
+                    if (pX >= current.pointLimitFromX && pX <= current.pointLimitToX) {
+                        double d = pY - currentY;
+                        if (distance > d * d) {
+                            computeNearest(current.left, p, level);
+                        }
+                    }
+                    // line to the edge
+                    else {
+                        if (pX > current.pointLimitToX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitToX, currentY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.left, p, level);
+                        } else if (pX < current.pointLimitFromX) {
+                            double distanceToSurface = distanceSquaredTo(p, current.pointLimitFromX, currentY);
+                            if (distance > distanceToSurface)
+                                computeNearest(current.left, p, level);
+                        }
                     }
                 }
             }
@@ -595,7 +639,7 @@ public class KdTree {
                 points.range(rhv)) {
             StdOut.println(pInRange);
         }
-/*
+
         Point2D targetPoint = new Point2D(0.43, 0.52);
         Point2D nearestPoint = points.nearest(targetPoint);
         StdOut.println("Nearest : " + nearestPoint);
@@ -610,17 +654,14 @@ public class KdTree {
         StdOut.println("Nearest : " + nearestPoint3);
 
 
- */
-
         //points.doWorkVertical();
-        points.doWorkHorizontal();
+        //points.doWorkHorizontal();
 
 
     }
-    HashMap<Double,MinMax> h = null;
-    HashMap<Double,MinMax> v = null;
 
-    private void doWorkHorizontal () {
+
+    private void doWorkHorizontal() {
         v = new HashMap<Double, MinMax>();
         v.put(0.0, new MinMax(0.0, 1.0));
         v.put(1.0, new MinMax(0.0, 1.0));
@@ -639,16 +680,14 @@ public class KdTree {
 
         if (sortedKeys.contains(currentValueX)) {
             int indexCurrentValue = sortedKeys.indexOf(currentValueX);
-            if(currentValueX == 1.0) {
+            if (currentValueX == 1.0) {
                 limitLeft = getValidLess(indexCurrentValue, sortedKeys, currentValueY, false);
                 limitRight = 1.0;
-            }
-            else {
+            } else {
                 limitLeft = getValidLess(indexCurrentValue, sortedKeys, currentValueY, false);
                 limitRight = getValidNext(indexCurrentValue, sortedKeys, currentValueY, false);
             }
-        }
-        else {
+        } else {
 
             sortedKeys.add(currentValueX);
             Collections.sort(sortedKeys);
@@ -663,36 +702,33 @@ public class KdTree {
     }
 
 
-
-    private void doWorkVertical (){
+    private void doWorkVertical() {
         h = new HashMap<Double, MinMax>();
-        h.put(0.0, new MinMax(0.0,1.0));
-        h.put(1.0, new MinMax(0.0,1.0));
-        h.put(0.25, new MinMax(0.5,1.0));
-        h.put(0.75, new MinMax(0.0,0.49));
+        h.put(0.0, new MinMax(0.0, 1.0));
+        h.put(1.0, new MinMax(0.0, 1.0));
+        // h.put(0.25, new MinMax(0.5,1.0));
+        // h.put(0.75, new MinMax(0.0,0.49));
 
         ArrayList<Double> sortedKeys = new ArrayList<Double>(h.keySet());
 
         Collections.sort(sortedKeys);
 
-        double currentValueX = 1.0;
-        double currentValueY = 0.75;
+        double currentValueX = 0.5;
+        double currentValueY = 1.0;
 
         double limitLeft = 0.0;
         double limitRight = 1.0;
 
         if (sortedKeys.contains(currentValueY)) {
             int indexCurrentValue = sortedKeys.indexOf(currentValueY);
-            if(currentValueY == 1.0) {
+            if (currentValueY == 1.0) {
                 limitLeft = getValidLess(indexCurrentValue, sortedKeys, currentValueX, true);
                 limitRight = 1.0;
-            }
-            else {
+            } else {
                 limitLeft = getValidLess(indexCurrentValue, sortedKeys, currentValueX, true);
                 limitRight = getValidNext(indexCurrentValue, sortedKeys, currentValueX, true);
             }
-        }
-        else {
+        } else {
 
             sortedKeys.add(currentValueY);
             Collections.sort(sortedKeys);
@@ -704,55 +740,57 @@ public class KdTree {
 
         StdOut.println("limitLeft : " + limitLeft + " limitRight : " + limitRight);
     }
-    private double getValidNext (int indexCurrentValue, ArrayList<Double> sortedKeys, double currentValue, boolean vertical){
+
+    private double getValidNext(int indexCurrentValue, ArrayList<Double> sortedKeys, double currentValue, boolean vertical) {
         double returnValue = 1.0;
         for (int i = indexCurrentValue; i < sortedKeys.size(); i++) {
-            double nextValue = sortedKeys.get(i+1);
+            double nextValue = sortedKeys.get(i + 1);
             double min = 0.0;
             double max = 1.0;
-            if(vertical) {
-                if(!h.containsKey(nextValue))
+            if (vertical) {
+                if (!h.containsKey(nextValue))
                     continue;
                 min = h.get(nextValue).min;
                 max = h.get(nextValue).max;
-            }
-            else {
-                if(!v.containsKey(nextValue))
+            } else {
+                if (!v.containsKey(nextValue))
                     continue;
                 min = v.get(nextValue).min;
                 max = v.get(nextValue).max;
             }
-            if(currentValue >= min && currentValue <= max)
+            if (currentValue >= min && currentValue <= max)
                 return nextValue;
         }
         return returnValue;
     }
 
-    private double getValidLess (int indexCurrentValue, ArrayList<Double> sortedKeys, double currentValue, boolean vertical) {
+    private double getValidLess(int indexCurrentValue, ArrayList<Double> sortedKeys, double currentValue, boolean vertical) {
         double returnValue = 0.0;
-        for (int i = indexCurrentValue; i > 0 ; i--) {
+        for (int i = indexCurrentValue; i > 0; i--) {
             double lessValue = sortedKeys.get(i);
+            if (lessValue == 1.0)
+                continue;
 
             double min = 0.0;
             double max = 1.0;
-            if(vertical) {
-                if(!h.containsKey(lessValue))
+            if (vertical) {
+                if (!h.containsKey(lessValue))
                     continue;
                 min = h.get(lessValue).min;
                 max = h.get(lessValue).max;
-            }
-            else {
-                if(!v.containsKey(lessValue))
+            } else {
+                if (!v.containsKey(lessValue))
                     continue;
                 min = v.get(lessValue).min;
                 max = v.get(lessValue).max;
             }
 
-            if(currentValue >= min && currentValue <= max)
+            if (currentValue >= min && currentValue <= max)
                 return lessValue;
         }
         return returnValue;
     }
+
     private static class MinMax {
         private final double min;
         private final double max;

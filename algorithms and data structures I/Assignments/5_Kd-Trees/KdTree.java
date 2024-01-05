@@ -7,8 +7,6 @@ import edu.princeton.cs.algs4.StdDraw;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 
 public class KdTree {
     private Node root;
@@ -363,8 +361,12 @@ public class KdTree {
         }
     }
 
-    private HashMap<Double, MinMax> h = new HashMap<Double, MinMax>();
-    private HashMap<Double, MinMax> v = new HashMap<Double, MinMax>();
+    //private HashMap<Double, MinMax> h = new HashMap<Double, MinMax>();
+    private final ArrayList<Double> hKey = new ArrayList<Double>();
+    private final ArrayList<MinMax> hValue = new ArrayList<MinMax>();
+    //private HashMap<Double, MinMax> v = new HashMap<Double, MinMax>();
+    private final ArrayList<Double> vKey = new ArrayList<Double>();
+    private final ArrayList<MinMax> vValue = new ArrayList<MinMax>();
 
     private void setMinDistance(Point2D reference, Point2D point) {
         if (reference.distanceSquaredTo(point) < distance) {
@@ -390,11 +392,15 @@ public class KdTree {
 
         // init
         if (root.pointLimitFromX == -1) {
-            v.put(0.0, new MinMax(0.0, 1.0));
-            v.put(1.0, new MinMax(0.0, 1.0));
+            vKey.add(0.0);
+            vValue.add(new MinMax(0.0, 1.0));
+            vKey.add(1.0);
+            vValue.add(new MinMax(0.0, 1.0));
 
-            h.put(0.0, new MinMax(0.0, 1.0));
-            h.put(1.0, new MinMax(0.0, 1.0));
+            hKey.add(0.0);
+            hValue.add(new MinMax(0.0, 1.0));
+            hKey.add(1.0);
+            hValue.add(new MinMax(0.0, 1.0));
         }
 
         computeNearest(root, p, 0);
@@ -417,8 +423,7 @@ public class KdTree {
         // vertical
         if (level % 2 == 1) {
             if (current.pointLimitFromX == -1) {
-                ArrayList<Double> sortedKeys = new ArrayList<Double>(h.keySet());
-
+                ArrayList<Double> sortedKeys = new ArrayList<Double>(hKey);
                 Collections.sort(sortedKeys);
 
                 if (sortedKeys.contains(currentY)) {
@@ -445,8 +450,9 @@ public class KdTree {
                     sortedKeys.remove(currentY);
                 }
 
-                if (!v.containsKey(currentX)) {
-                    v.put(currentX, new MinMax(current.pointLimitFromY, current.pointLimitToY));
+                if (!vKey.contains(currentX)) {
+                    vKey.add(currentX);
+                    vValue.add(new MinMax(current.pointLimitFromY, current.pointLimitToY));
                 }
             }
             // left
@@ -515,7 +521,7 @@ public class KdTree {
         // horizontal
         else {
             if (current.pointLimitFromX == -1) {
-                ArrayList<Double> sortedKeys = new ArrayList<Double>(v.keySet());
+                ArrayList<Double> sortedKeys = new ArrayList<Double>(vKey);
                 Collections.sort(sortedKeys);
 
                 if (sortedKeys.contains(currentX)) {
@@ -542,8 +548,9 @@ public class KdTree {
                     sortedKeys.remove(currentX);
                 }
 
-                if (!h.containsKey(currentY)) {
-                    h.put(currentY, new MinMax(current.pointLimitFromX, current.pointLimitToX));
+                if (!hKey.contains(currentY)) {
+                    hKey.add(currentY);
+                    hValue.add(new MinMax(current.pointLimitFromX, current.pointLimitToX));
                 }
             }
             // down
@@ -628,7 +635,7 @@ public class KdTree {
             points.insert(p);
         }
 
-        // points.draw();
+         points.draw();
 
         // StdOut.println(points.contains(p));
 
@@ -640,11 +647,17 @@ public class KdTree {
             StdOut.println(pInRange);
         }
 
-        Point2D targetPoint = new Point2D(0.43, 0.52);
+        Point2D targetPoint = new Point2D(0.41, 0.71);
+
+        StdDraw.setPenRadius(0.03);
+        StdDraw.setPenColor(StdDraw.RED);
+        
+        targetPoint.draw();
+
         Point2D nearestPoint = points.nearest(targetPoint);
         StdOut.println("Nearest : " + nearestPoint);
 
-
+/*
         Point2D targetPoint2 = new Point2D(0.40, 0.52);
         Point2D nearestPoint2 = points.nearest(targetPoint2);
         StdOut.println("Nearest : " + nearestPoint2);
@@ -653,7 +666,7 @@ public class KdTree {
         Point2D nearestPoint3 = points.nearest(targetPoint3);
         StdOut.println("Nearest : " + nearestPoint3);
 
-
+*/
         //points.doWorkVertical();
         //points.doWorkHorizontal();
 
@@ -661,7 +674,7 @@ public class KdTree {
     }
 
 
-    private void doWorkHorizontal() {
+    /*private void doWorkHorizontal() {
         v = new HashMap<Double, MinMax>();
         v.put(0.0, new MinMax(0.0, 1.0));
         v.put(1.0, new MinMax(0.0, 1.0));
@@ -740,6 +753,7 @@ public class KdTree {
 
         StdOut.println("limitLeft : " + limitLeft + " limitRight : " + limitRight);
     }
+    */
 
     private double getValidNext(int indexCurrentValue, ArrayList<Double> sortedKeys, double currentValue, boolean vertical) {
         double returnValue = 1.0;
@@ -748,15 +762,17 @@ public class KdTree {
             double min = 0.0;
             double max = 1.0;
             if (vertical) {
-                if (!h.containsKey(nextValue))
+                if (!hKey.contains(nextValue))
                     continue;
-                min = h.get(nextValue).min;
-                max = h.get(nextValue).max;
+                int index = hKey.indexOf(nextValue);
+                min = hValue.get(index).min;
+                max = hValue.get(index).max;
             } else {
-                if (!v.containsKey(nextValue))
+                if (!vKey.contains(nextValue))
                     continue;
-                min = v.get(nextValue).min;
-                max = v.get(nextValue).max;
+                int index = vKey.indexOf(nextValue);
+                min = vValue.get(index).min;
+                max = vValue.get(index).max;
             }
             if (currentValue >= min && currentValue <= max)
                 return nextValue;
@@ -774,15 +790,17 @@ public class KdTree {
             double min = 0.0;
             double max = 1.0;
             if (vertical) {
-                if (!h.containsKey(lessValue))
+                if (!hKey.contains(lessValue))
                     continue;
-                min = h.get(lessValue).min;
-                max = h.get(lessValue).max;
+                int index = hKey.indexOf(lessValue);
+                min = hValue.get(index).min;
+                max = hValue.get(index).max;
             } else {
-                if (!v.containsKey(lessValue))
+                if (!vKey.contains(lessValue))
                     continue;
-                min = v.get(lessValue).min;
-                max = v.get(lessValue).max;
+                int index = vKey.indexOf(lessValue);
+                min = vValue.get(index).min;
+                max = vValue.get(index).max;
             }
 
             if (currentValue >= min && currentValue <= max)
